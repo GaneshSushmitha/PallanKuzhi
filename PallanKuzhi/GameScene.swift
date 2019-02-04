@@ -16,36 +16,11 @@ class GameScene: SKScene {
 
     private var board: SKSpriteNode?
     
-    private var pitSquare00: SKSpriteNode?
-    private var pitShape00: SKShapeNode?
-    private var pitSquare01: SKSpriteNode?
-    private var pitShape01: SKShapeNode?
-    private var pitSquare02: SKSpriteNode?
-    private var pitShape02: SKShapeNode?
-    private var pitSquare03: SKSpriteNode?
-    private var pitShape03: SKShapeNode?
-    private var pitSquare04: SKSpriteNode?
-    private var pitShape04: SKShapeNode?
-    private var pitSquare05: SKSpriteNode?
-    private var pitShape05: SKShapeNode?
-    private var pitSquare06: SKSpriteNode?
-    private var pitShape06: SKShapeNode?
-    
-    private var pitSquare10: SKSpriteNode?
-    private var pitShape10: SKShapeNode?
-    private var pitSquare11: SKSpriteNode?
-    private var pitShape11: SKShapeNode?
-    private var pitSquare12: SKSpriteNode?
-    private var pitShape12: SKShapeNode?
-    private var pitSquare13: SKSpriteNode?
-    private var pitShape13: SKShapeNode?
-    private var pitSquare14: SKSpriteNode?
-    private var pitShape14: SKShapeNode?
-    private var pitSquare15: SKSpriteNode?
-    private var pitShape15: SKShapeNode?
-    private var pitSquare16: SKSpriteNode?
-    private var pitShape16: SKShapeNode?
+    private var touchedPitNode : SKShapeNode?
 
+    private var pits = [SKShapeNode](repeating: SKShapeNode(), count: 14) //initializing array of shapenode ()-> constructor call
+    
+    private var pitNeighbours = [(from: SKShapeNode, to: SKShapeNode)]()
 
     override func didMove(to view: SKView) {
         
@@ -54,23 +29,15 @@ class GameScene: SKScene {
         
         self.board = self.childNode(withName: "//Board") as? SKSpriteNode
         
-        if let board = self.board {
-            self.pitSquare00 = board.childNode(withName: "//PitSquare00") as? SKSpriteNode
-            self.pitSquare01 = board.childNode(withName: "//PitSquare01") as? SKSpriteNode
-            self.pitSquare02 = board.childNode(withName: "//PitSquare02") as? SKSpriteNode
-            self.pitSquare03 = board.childNode(withName: "//PitSquare03") as? SKSpriteNode
-            self.pitSquare04 = board.childNode(withName: "//PitSquare04") as? SKSpriteNode
-            self.pitSquare05 = board.childNode(withName: "//PitSquare05") as? SKSpriteNode
-            self.pitSquare06 = board.childNode(withName: "//PitSquare06") as? SKSpriteNode
-            self.pitSquare10 = board.childNode(withName: "//PitSquare10") as? SKSpriteNode
-            self.pitSquare11 = board.childNode(withName: "//PitSquare11") as? SKSpriteNode
-            self.pitSquare12 = board.childNode(withName: "//PitSquare12") as? SKSpriteNode
-            self.pitSquare13 = board.childNode(withName: "//PitSquare13") as? SKSpriteNode
-            self.pitSquare14 = board.childNode(withName: "//PitSquare14") as? SKSpriteNode
-            self.pitSquare15 = board.childNode(withName: "//PitSquare15") as? SKSpriteNode
-            self.pitSquare16 = board.childNode(withName: "//PitSquare16") as? SKSpriteNode
-        }
-
+        self.name = "GameScene"
+        
+        populatePits()
+        
+        // Create neighbour relationships
+        initialiseNeighbours()
+        
+        // Create seeds
+        initialiseSeeds()
         
         if let title = self.title {
             title.alpha = 0.0
@@ -82,11 +49,90 @@ class GameScene: SKScene {
         
         if let spinnyNode = self.spinnyNode {
             spinnyNode.lineWidth = 0.5
-            
             spinnyNode.run(SKAction.repeatForever(SKAction.rotate(byAngle: CGFloat(Double.pi), duration: 1)))
             spinnyNode.run(SKAction.sequence([SKAction.wait(forDuration: 0.5),
                                               SKAction.fadeOut(withDuration: 0.5),
                                               SKAction.removeFromParent()]))
+        }
+    }
+    
+    func populatePits() {
+        
+        if let board = self.board {
+            let pitSquare00 = board.childNode(withName: "//PitSquare00") as! SKSpriteNode // force casting SKNode to SKSpriteNode !
+            let pitSquare01 = board.childNode(withName: "//PitSquare01") as! SKSpriteNode
+            let pitSquare02 = board.childNode(withName: "//PitSquare02") as! SKSpriteNode
+            let pitSquare03 = board.childNode(withName: "//PitSquare03") as! SKSpriteNode
+            let pitSquare04 = board.childNode(withName: "//PitSquare04") as! SKSpriteNode
+            let pitSquare05 = board.childNode(withName: "//PitSquare05") as! SKSpriteNode
+            let pitSquare06 = board.childNode(withName: "//PitSquare06") as! SKSpriteNode
+            let pitSquare10 = board.childNode(withName: "//PitSquare10") as! SKSpriteNode
+            let pitSquare11 = board.childNode(withName: "//PitSquare11") as! SKSpriteNode
+            let pitSquare12 = board.childNode(withName: "//PitSquare12") as! SKSpriteNode
+            let pitSquare13 = board.childNode(withName: "//PitSquare13") as! SKSpriteNode
+            let pitSquare14 = board.childNode(withName: "//PitSquare14") as! SKSpriteNode
+            let pitSquare15 = board.childNode(withName: "//PitSquare15") as! SKSpriteNode
+            let pitSquare16 = board.childNode(withName: "//PitSquare16") as! SKSpriteNode
+            
+            // Array of pit squares in anticlockwise order from pit square 10.
+            let pitSquares = [pitSquare10,pitSquare11,pitSquare12,pitSquare13,pitSquare14,pitSquare15,pitSquare16,
+                              pitSquare06,pitSquare05,pitSquare04,pitSquare03,pitSquare02,pitSquare01,pitSquare00]
+            
+            for (index, pitSquare) in pitSquares.enumerated() {
+                let pit = SKShapeNode(circleOfRadius: 40.0)
+                pit.fillColor = UIColor.green
+                pit.name = "Pit\(pitSquare.name?.suffix(2) ?? "")"
+                pitSquare.addChild(pit)
+                pits[index] = pit
+            }
+        }
+    }
+    
+    func initialiseNeighbours() {
+        let r1 = (pits[0],pits[1])
+        let r2 = (pits[1],pits[2])
+        let r3 = (pits[2],pits[3])
+        let r4 = (pits[3],pits[4])
+        let r5 = (pits[4],pits[5])
+        let r6 = (pits[5],pits[6])
+        let r7 = (pits[6],pits[7])
+        let r8 = (pits[7],pits[8])
+        let r9 = (pits[8],pits[9])
+        let r10 = (pits[9],pits[10])
+        let r11 = (pits[10],pits[11])
+        let r12 = (pits[11],pits[12])
+        let r13 = (pits[12],pits[13])
+        let r14 = (pits[13],pits[0])
+        
+        pitNeighbours = [r1, r2, r3, r4, r5, r6, r7, r8, r9, r10, r11, r12, r13, r14]
+    }
+    
+    func initialiseSeeds(){
+        for (pitNo, pit) in pits.enumerated() { //pit object + array index => enumerated
+            for seedNo in 1...6 {
+                
+                let pitSeed = SKShapeNode(circleOfRadius: 8.0)
+                pitSeed.fillColor = UIColor.init(red: (CGFloat(20.0) * CGFloat(seedNo)), green: (CGFloat(30.0) * CGFloat(seedNo)), blue: (CGFloat(40.0) * CGFloat(seedNo)), alpha: 1.0)
+                pitSeed.name = "PitSeed\(pitNo * 6 + seedNo)"
+                
+                switch seedNo {
+                case 1:
+                    pitSeed.position = CGPoint(x: 0.0, y: 32.0)
+                case 2:
+                    pitSeed.position = CGPoint(x: -24.0, y: 15.0)
+                case 3:
+                    pitSeed.position = CGPoint(x: -24.0, y: -15.0)
+                case 4:
+                    pitSeed.position = CGPoint(x: 0.0, y: -32.0)
+                case 5:
+                    pitSeed.position = CGPoint(x: 24.0, y: -15.0)
+                case 6:
+                    pitSeed.position = CGPoint(x: 24.0, y: 15.0)
+                default:
+                    break
+                }
+                pit.addChild(pitSeed)
+            }
         }
     }
     
@@ -97,6 +143,22 @@ class GameScene: SKScene {
             n.strokeColor = SKColor.white
             self.addChild(n)
         }
+        
+        //Track touch down of pits
+        let touchedNodes = self.nodes(at: pos)
+        let touchedPitNodes = touchedNodes.filter({ (touchedNode) -> Bool in
+            if let name = touchedNode.name {
+                return name.count == "PitXX".count && name.prefix(3) == "Pit"
+            }
+            return false
+        })
+        
+        if let touchedPitNode = touchedPitNodes.first  as? SKShapeNode {
+            touchedPitNode.fillColor = UIColor.lightGray
+            self.touchedPitNode = touchedPitNode
+            print("Touched Down \(String(describing: self.touchedPitNode?.name)), Position: \(pos)")
+        }
+        
     }
     
     func touchMoved(toPoint pos : CGPoint) {
@@ -108,6 +170,11 @@ class GameScene: SKScene {
     }
     
     func touchUp(atPoint pos : CGPoint) {
+        if let touchedPitNode = self.touchedPitNode {
+            touchedPitNode.fillColor = UIColor.green
+            print("Touched Up \(String(describing: touchedPitNode.name)), Position: \(pos)")
+            self.touchedPitNode = nil
+        }
     }
     
     override func touchesBegan(_ touches: Set<UITouch>, with event: UIEvent?) {
@@ -128,8 +195,7 @@ class GameScene: SKScene {
     override func touchesCancelled(_ touches: Set<UITouch>, with event: UIEvent?) {
         for t in touches { self.touchUp(atPoint: t.location(in: self)) }
     }
-    
-    
+
     override func update(_ currentTime: TimeInterval) {
         // Called before each frame is rendered
     }
