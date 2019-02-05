@@ -107,8 +107,24 @@ class GameScene: SKScene {
         pitNeighbours = [r1, r2, r3, r4, r5, r6, r7, r8, r9, r10, r11, r12, r13, r14]
     }
     
+    func getNeighbour(pit : SKShapeNode) -> SKShapeNode {
+       let r = pitNeighbours.first { (from: SKShapeNode, to: SKShapeNode) -> Bool in
+            return from == pit
+        }
+        if let r = r {
+            return r.to
+        }
+        return SKShapeNode()
+    }
+    
+    
     func initialiseSeeds(){
         for (pitNo, pit) in pits.enumerated() { //pit object + array index => enumerated
+            
+            //debug seeds
+            if pitNo > 0 {
+                break
+            }
             for seedNo in 1...6 {
                 
                 let pitSeed = SKShapeNode(circleOfRadius: 8.0)
@@ -158,6 +174,7 @@ class GameScene: SKScene {
             self.touchedPitNode = touchedPitNode
             if validateTouchedPit() {
                 highlightPit(color: UIColor.lightGray)
+                distributeSeeds()
             } else {
                 highlightPit(color: UIColor.red)
             }
@@ -179,6 +196,21 @@ class GameScene: SKScene {
     
     func highlightPit(color : UIColor) {
         self.touchedPitNode?.fillColor = color
+    }
+    
+    func distributeSeeds() {
+        if let touchedPitNode = self.touchedPitNode {
+            
+            let seeds = touchedPitNode.children
+            touchedPitNode.removeAllChildren()
+            
+            var neighborPit = getNeighbour(pit: touchedPitNode)
+            
+            for seed in seeds {
+                neighborPit.addChild(seed)
+                neighborPit = getNeighbour(pit: neighborPit)
+            }
+        }
     }
     
     func touchMoved(toPoint pos : CGPoint) {
