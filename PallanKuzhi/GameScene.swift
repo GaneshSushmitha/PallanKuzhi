@@ -154,11 +154,31 @@ class GameScene: SKScene {
         })
         
         if let touchedPitNode = touchedPitNodes.first  as? SKShapeNode {
-            touchedPitNode.fillColor = UIColor.lightGray
+            //touchedPitNode.fillColor = UIColor.lightGray
             self.touchedPitNode = touchedPitNode
+            if validateTouchedPit() {
+                highlightPit(color: UIColor.lightGray)
+            } else {
+                highlightPit(color: UIColor.red)
+            }
             print("Touched Down \(String(describing: self.touchedPitNode?.name)), Position: \(pos)")
         }
+    }
+    
+    func  validateTouchedPit() -> Bool {
         
+        // Todo : Check if valid turn of player
+        
+        // Check if the pit has seeds
+        if let touchedPitNode = self.touchedPitNode {
+            let  childSeeds = touchedPitNode.children
+            return childSeeds.count != 0
+        }
+        return false
+    }
+    
+    func highlightPit(color : UIColor) {
+        self.touchedPitNode?.fillColor = color
     }
     
     func touchMoved(toPoint pos : CGPoint) {
