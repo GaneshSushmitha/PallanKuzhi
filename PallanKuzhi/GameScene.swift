@@ -9,6 +9,11 @@
 import SpriteKit
 import GameplayKit
 
+enum Player : String {
+    case player1
+    case player2
+}
+
 class GameScene: SKScene {
     
     private var title : SKLabelNode?
@@ -21,6 +26,10 @@ class GameScene: SKScene {
     private var pits = [SKShapeNode](repeating: SKShapeNode(), count: 14) //initializing array of shapenode ()-> constructor call
     
     private var pitNeighbours = [(from: SKShapeNode, to: SKShapeNode)]()
+    
+    private var currentPlayer = Player.player1
+    
+    let pitColor = UIColor(red: CGFloat(215.0 / 255.0), green: CGFloat(240.0 / 255.0), blue: CGFloat(30.0 / 255.0), alpha: CGFloat(1.0))
 
     override func didMove(to view: SKView) {
         
@@ -80,7 +89,7 @@ class GameScene: SKScene {
             
             for (index, pitSquare) in pitSquares.enumerated() {
                 let pit = SKShapeNode(circleOfRadius: 40.0)
-                pit.fillColor = UIColor.green
+                pit.fillColor = pitColor
                 pit.name = "Pit\(pitSquare.name?.suffix(2) ?? "")"
                 pitSquare.addChild(pit)
                 pits[index] = pit
@@ -117,18 +126,21 @@ class GameScene: SKScene {
         return SKShapeNode()
     }
     
+    func rearrangeSeeds(){
+        
+    }
     
     func initialiseSeeds(){
         for (pitNo, pit) in pits.enumerated() { //pit object + array index => enumerated
             
             //debug seeds
-            if pitNo > 0 {
-                break
-            }
+            //if pitNo > 0 {
+               // break
+            //}
             for seedNo in 1...6 {
                 
                 let pitSeed = SKShapeNode(circleOfRadius: 8.0)
-                pitSeed.fillColor = UIColor.init(red: (CGFloat(20.0) * CGFloat(seedNo)), green: (CGFloat(30.0) * CGFloat(seedNo)), blue: (CGFloat(40.0) * CGFloat(seedNo)), alpha: 1.0)
+                pitSeed.fillColor = UIColor.init(red: (CGFloat(20.0) * CGFloat(seedNo) / 255.0), green: (CGFloat(30.0) * CGFloat(seedNo) / 255.0), blue: (CGFloat(40.0) * CGFloat(seedNo) / 255.0), alpha: 1.0)
                 pitSeed.name = "PitSeed\(pitNo * 6 + seedNo)"
                 
                 switch seedNo {
@@ -170,13 +182,12 @@ class GameScene: SKScene {
         })
         
         if let touchedPitNode = touchedPitNodes.first  as? SKShapeNode {
-            //touchedPitNode.fillColor = UIColor.lightGray
             self.touchedPitNode = touchedPitNode
             if validateTouchedPit() {
                 highlightPit(color: UIColor.lightGray)
                 distributeSeeds()
             } else {
-                highlightPit(color: UIColor.red)
+                highlightPit(color: UIColor.brown)
             }
             print("Touched Down \(String(describing: self.touchedPitNode?.name)), Position: \(pos)")
         }
@@ -203,12 +214,31 @@ class GameScene: SKScene {
             
             let seeds = touchedPitNode.children
             touchedPitNode.removeAllChildren()
+            setSeedCount(pit: touchedPitNode)
             
             var neighborPit = getNeighbour(pit: touchedPitNode)
             
             for seed in seeds {
                 neighborPit.addChild(seed)
+                //Specify position of the newly added seed
+                rearrangeSeeds()
+                //Set the seed count label
+                setSeedCount(pit: neighborPit)
                 neighborPit = getNeighbour(pit: neighborPit)
+            }
+        }
+    }
+    
+    func setSeedCount(pit: SKShapeNode)
+    {
+        if let pitName = pit.name {
+            if let seedCount = self.childNode(withName: "//SeedCount" + pitName.suffix(2)) as? SKLabelNode {
+                
+                //Animate the changed seed count in neighbour pit
+                seedCount.run(SKAction.sequence([SKAction.colorize(with: UIColor.blue, colorBlendFactor: 0.5, duration: 0.5),
+                                                 SKAction.colorize(with: UIColor.yellow, colorBlendFactor: 0.5, duration: 0.5)]))
+                //Set the new seed count
+                seedCount.text = String(pit.children.count)
             }
         }
     }
@@ -223,7 +253,7 @@ class GameScene: SKScene {
     
     func touchUp(atPoint pos : CGPoint) {
         if let touchedPitNode = self.touchedPitNode {
-            touchedPitNode.fillColor = UIColor.green
+            touchedPitNode.fillColor = pitColor
             print("Touched Up \(String(describing: touchedPitNode.name)), Position: \(pos)")
             self.touchedPitNode = nil
         }
