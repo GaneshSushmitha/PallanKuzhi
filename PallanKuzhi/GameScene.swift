@@ -33,9 +33,19 @@ class GameScene: SKScene {
     
     private var player2Pits = [SKShapeNode](repeating: SKShapeNode(), count: 7)
     
+    private var playerSprite1 : SKSpriteNode?
+    
+    private var playerSprite2 : SKSpriteNode?
+    
     let pitColor = UIColor(red: CGFloat(215.0 / 255.0), green: CGFloat(240.0 / 255.0), blue: CGFloat(30.0 / 255.0), alpha: CGFloat(1.0))
     
-    let playerSpriteScale = SKAction.scale(by: 1.15, duration: 0.4)
+    let playerSpriteScaleUp = SKAction.scale(to: 1.2, duration: 0.8)
+    
+    let playerSpriteScaleDown = SKAction.scale(to: 1.0, duration: 0.8)
+
+    let playerSpriteMoveUp = SKAction.moveBy(x: 0.0, y: 50.0, duration: 0.5)
+    
+    let playerSpriteMoveDown = SKAction.moveBy(x: 0.0, y: -50.0, duration: 0.5)
 
     override func didMove(to view: SKView) {
         
@@ -43,6 +53,10 @@ class GameScene: SKScene {
         self.title = self.childNode(withName: "//PallanKuzhi") as? SKLabelNode
         
         self.board = self.childNode(withName: "//Board") as? SKSpriteNode
+        
+        self.playerSprite1 = board?.childNode(withName: "//PlayerSprite1") as? SKSpriteNode
+        
+        self.playerSprite2 = board?.childNode(withName: "//PlayerSprite2") as? SKSpriteNode
         
         self.name = "GameScene"
         
@@ -103,6 +117,7 @@ class GameScene: SKScene {
             assignPlayerPits()
         }
     }
+
     func assignPlayerPits() {
         player1Pits = Array(pits[0...6])
         player2Pits = Array(pits[7...13])
@@ -177,11 +192,15 @@ class GameScene: SKScene {
   
     func displayNextPlayerTurn() {
         if currentPlayer == Player.player1 {
-            let playerSprite1 = board?.childNode(withName: "//PlayerSprite1") as! SKSpriteNode
-            playerSprite1.run(SKAction.sequence([playerSpriteScale, playerSpriteScale.reversed()]))
+            playerSprite1?.run(playerSpriteScaleUp)
+            playerSprite1?.run(playerSpriteMoveUp)
+            playerSprite2?.run(playerSpriteScaleDown)
+            playerSprite2?.run(playerSpriteMoveUp)
         } else {
-            let playerSprite2 = board?.childNode(withName: "//PlayerSprite2") as! SKSpriteNode
-            playerSprite2.run(SKAction.sequence([playerSpriteScale, playerSpriteScale.reversed()]))
+            playerSprite2?.run(playerSpriteScaleUp)
+            playerSprite2?.run(playerSpriteMoveDown)
+            playerSprite1?.run(playerSpriteScaleDown)
+            playerSprite1?.run(playerSpriteMoveDown)
         }
     }
     
@@ -204,10 +223,10 @@ class GameScene: SKScene {
         if let touchedPitNode = touchedPitNodes.first  as? SKShapeNode {
             self.touchedPitNode = touchedPitNode
             if validateTouchedPit() {
-                highlightPit(color: UIColor.lightGray)
+                highlightPit(color: UIColor.blue.withAlphaComponent(0.7))
                 distributeSeeds()
             } else {
-                highlightPit(color: UIColor.brown)
+                highlightPit(color: UIColor.brown.withAlphaComponent(0.7))
             }
             print("Touched Down \(String(describing: self.touchedPitNode?.name)), Position: \(pos)")
         }
@@ -216,19 +235,19 @@ class GameScene: SKScene {
     func  validateTouchedPit() -> Bool {
         
         // Check if valid turn of player
-        if(validateCurrentPlayerMove()) {
-        // Check if the pit has seeds
-        if let touchedPitNode = self.touchedPitNode {
-            let  childSeeds = touchedPitNode.children
-            return childSeeds.count != 0
-        }
+        if validateCurrentPlayerMove() {
+            // Check if the pit has seeds
+            if let touchedPitNode = self.touchedPitNode {
+                let  childSeeds = touchedPitNode.children
+                return !childSeeds.isEmpty
+            }
         }
         return false
     }
     
     func validateCurrentPlayerMove() -> Bool {
         if let touchedPitNode = self.touchedPitNode {
-            if currentPlayer == Player.player1 {
+            if currentPlayer == .player1 {
                 return player1Pits.contains(touchedPitNode)
             } else {
                 return player2Pits.contains(touchedPitNode)
@@ -293,18 +312,16 @@ class GameScene: SKScene {
     }
     
     func assignNextPlayer() {
-        if currentPlayer == Player.player1{
-            currentPlayer = Player.player2
-        } else {
-            currentPlayer = Player.player1
+        switch currentPlayer {
+        case .player1:
+            currentPlayer = .player2
+        case .player2:
+            currentPlayer = .player1
         }
         displayNextPlayerTurn()
     }
     
     override func touchesBegan(_ touches: Set<UITouch>, with event: UIEvent?) {
-//        if let label = self.label {
-//            label.run(SKAction.init(named: "Pulse")!, withKey: "fadeInOut")
-//        }
         for t in touches { self.touchDown(atPoint: t.location(in: self)) }
     }
     
