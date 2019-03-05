@@ -37,6 +37,12 @@ class GameScene: SKScene {
     
     private var playerSprite2 : SKSpriteNode?
     
+    private var player1Score : Int = 0
+    
+    private var player2Score : Int = 0
+    
+    private var validPitTouched = true
+    
     let pitColor = UIColor(red: CGFloat(215.0 / 255.0), green: CGFloat(240.0 / 255.0), blue: CGFloat(30.0 / 255.0), alpha: CGFloat(1.0))
     
     let playerSpriteScaleUp = SKAction.scale(to: 1.2, duration: 0.8)
@@ -160,8 +166,8 @@ class GameScene: SKScene {
         for (pitNo, pit) in pits.enumerated() { //pit object + array index => enumerated
             
             //debug seeds
-            //if pitNo > 0 {
-               // break
+           // if pitNo > 2 {
+             //   break
             //}
             for seedNo in 1...6 {
                 
@@ -239,10 +245,13 @@ class GameScene: SKScene {
             // Check if the pit has seeds
             if let touchedPitNode = self.touchedPitNode {
                 let  childSeeds = touchedPitNode.children
-                return !childSeeds.isEmpty
+                self.validPitTouched = !childSeeds.isEmpty
             }
         }
-        return false
+        else {
+        self.validPitTouched = false
+        }
+        return self.validPitTouched
     }
     
     func validateCurrentPlayerMove() -> Bool {
@@ -260,23 +269,29 @@ class GameScene: SKScene {
         self.touchedPitNode?.fillColor = color
     }
     
+    //Distribute seeds until an empty pit is encountered
     func distributeSeeds() {
         if let touchedPitNode = self.touchedPitNode {
-            
-            let seeds = touchedPitNode.children
-            touchedPitNode.removeAllChildren()
-            setSeedCount(pit: touchedPitNode)
-            
-            var neighborPit = getNeighbour(pit: touchedPitNode)
-            
-            for seed in seeds {
-                neighborPit.addChild(seed)
-                //Specify position of the newly added seed
-                rearrangeSeeds()
-                //Set the seed count label
-                setSeedCount(pit: neighborPit)
-                neighborPit = getNeighbour(pit: neighborPit)
+            var currentPitNode = touchedPitNode
+            while(!currentPitNode.children.isEmpty){
+                let seeds = currentPitNode.children
+                currentPitNode.removeAllChildren()
+                setSeedCount(pit: currentPitNode)
+                
+                var neighborPit = getNeighbour(pit: currentPitNode)
+                
+                for seed in seeds {
+                    neighborPit.addChild(seed)
+                    //Specify position of the newly added seed
+                    rearrangeSeeds()
+                    //Set the seed count label
+                    setSeedCount(pit: neighborPit)
+                    neighborPit = getNeighbour(pit: neighborPit)
+                }
+                currentPitNode = neighborPit
+                //print((String(describing:currentPitNode.name)))
             }
+            captureSeeds(pit: getNeighbour(pit: currentPitNode))
         }
     }
     
@@ -294,6 +309,28 @@ class GameScene: SKScene {
         }
     }
     
+    func captureSeeds(pit: SKShapeNode) {
+        var capturedSeedCount : Int
+        if let capturedPitName = pit.name {
+            if !pit.children.isEmpty {
+                capturedSeedCount = pit.children.count
+                pit.removeAllChildren()
+                setSeedCount(pit: pit)
+                updatePlayerScores(score: capturedSeedCount)
+            }
+        }
+    }
+    
+    func updatePlayerScores(score: Int){
+        if currentPlayer == .player1 {
+            self.player1Score = player1Score + score
+            print("Player 1 Score \(String(player1Score))")
+        } else {
+            self.player2Score = player2Score + score
+             print("Player 2 Score \(String(player2Score))")
+        }
+    }
+    
     func touchMoved(toPoint pos : CGPoint) {
         if let n = self.spinnyNode?.copy() as! SKShapeNode? {
             n.position = pos
@@ -308,17 +345,48 @@ class GameScene: SKScene {
             print("Touched Up \(String(describing: touchedPitNode.name)), Position: \(pos)")
             assignNextPlayer()
             self.touchedPitNode = nil
+            self.validPitTouched = true
         }
     }
     
-    func assignNextPlayer() {
+    func checkSeedsAvailability() -> Bool {
+        var availablePitsWithSeeds : Int = 0
         switch currentPlayer {
         case .player1:
-            currentPlayer = .player2
+            for p in player2Pits { if !p.children.isEmpty {availablePitsWithSeeds += 1}}
+            break
         case .player2:
-            currentPlayer = .player1
+            for p in player1Pits { if !p.children.isEmpty {availablePitsWithSeeds += 1}}
+            break
         }
-        displayNextPlayerTurn()
+        return availablePitsWithSeeds > 0 ? true : false
+    }
+    
+    func assignNextPlayer() {
+        if(checkSeedsAvailability()) {
+            if(validPitTouched) {
+                switch currentPlayer {
+                case .player1:
+                    currentPlayer = .player2
+                case .player2:
+                    currentPlayer = .player1
+                }
+                displayNextPlayerTurn()
+            }
+        } else {
+            setWinner()
+        }
+    }
+    
+    func setWinner() {
+        let winner : Player
+        if(player1Score == player2Score) {
+            winner = currentPlayer
+        } else {
+            winner = player1Score > player2Score ? .player1 : .player2
+            print("Winner is: " + winner.rawValue)
+        }
+        //display winner and stop the game
     }
     
     override func touchesBegan(_ touches: Set<UITouch>, with event: UIEvent?) {
@@ -341,3 +409,4 @@ class GameScene: SKScene {
         // Called before each frame is rendered
     }
 }
+
