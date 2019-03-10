@@ -17,6 +17,8 @@
 		7746A63121F7B3E700559A0E /* LaunchScreen.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = 7746A62F21F7B3E700559A0E /* LaunchScreen.storyboard */; };
 		7746A63C21F7B3E700559A0E /* PallanKuzhiTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7746A63B21F7B3E700559A0E /* PallanKuzhiTests.swift */; };
 		7746A64721F7B3E700559A0E /* PallanKuzhiUITests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7746A64621F7B3E700559A0E /* PallanKuzhiUITests.swift */; };
+		779907E022348AEC00D16290 /* GameOverScene.sks in Resources */ = {isa = PBXBuildFile; fileRef = 779907DF22348AEC00D16290 /* GameOverScene.sks */; };
+		779907E222348B6200D16290 /* GameOverScene.swift in Sources */ = {isa = PBXBuildFile; fileRef = 779907E122348B6200D16290 /* GameOverScene.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -53,6 +55,8 @@
 		7746A64221F7B3E700559A0E /* PallanKuzhiUITests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = PallanKuzhiUITests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		7746A64621F7B3E700559A0E /* PallanKuzhiUITests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PallanKuzhiUITests.swift; sourceTree = "<group>"; };
 		7746A64821F7B3E700559A0E /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
+		779907DF22348AEC00D16290 /* GameOverScene.sks */ = {isa = PBXFileReference; lastKnownFileType = file.sks; path = GameOverScene.sks; sourceTree = "<group>"; };
+		779907E122348B6200D16290 /* GameOverScene.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GameOverScene.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -112,6 +116,8 @@
 				7746A62D21F7B3E700559A0E /* Assets.xcassets */,
 				7746A62F21F7B3E700559A0E /* LaunchScreen.storyboard */,
 				7746A63221F7B3E700559A0E /* Info.plist */,
+				779907DF22348AEC00D16290 /* GameOverScene.sks */,
+				779907E122348B6200D16290 /* GameOverScene.swift */,
 			);
 			path = PallanKuzhi;
 			sourceTree = "<group>";
@@ -242,6 +248,7 @@
 				7746A62321F7B3E500559A0E /* GameScene.sks in Resources */,
 				7746A62E21F7B3E700559A0E /* Assets.xcassets in Resources */,
 				7746A63121F7B3E700559A0E /* LaunchScreen.storyboard in Resources */,
+				779907E022348AEC00D16290 /* GameOverScene.sks in Resources */,
 				7746A62521F7B3E500559A0E /* Actions.sks in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
@@ -269,6 +276,7 @@
 			files = (
 				7746A62721F7B3E500559A0E /* GameScene.swift in Sources */,
 				7746A62921F7B3E500559A0E /* GameViewController.swift in Sources */,
+				779907E222348B6200D16290 /* GameOverScene.swift in Sources */,
 				7746A62121F7B3E500559A0E /* AppDelegate.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;

@@ -37,6 +37,10 @@ class GameScene: SKScene {
     
     private var playerSprite2 : SKSpriteNode?
     
+    private var playerScoreValue1 : SKLabelNode?
+    
+    private var playerScoreValue2 : SKLabelNode?
+    
     private var player1Score : Int = 0
     
     private var player2Score : Int = 0
@@ -64,6 +68,10 @@ class GameScene: SKScene {
         
         self.playerSprite2 = board?.childNode(withName: "//PlayerSprite2") as? SKSpriteNode
         
+        self.playerScoreValue1 = self.childNode(withName: "//PlayerScoreValue1") as? SKLabelNode
+        
+        self.playerScoreValue2 = self.childNode(withName: "//PlayerScoreValue2") as? SKLabelNode
+    
         self.name = "GameScene"
         
         populatePits()
@@ -166,9 +174,10 @@ class GameScene: SKScene {
         for (pitNo, pit) in pits.enumerated() { //pit object + array index => enumerated
             
             //debug seeds
-           // if pitNo > 2 {
-             //   break
+            //if pitNo > 0 {
+              //  break
             //}
+            
             for seedNo in 1...6 {
                 
                 let pitSeed = SKShapeNode(circleOfRadius: 8.0)
@@ -314,6 +323,7 @@ class GameScene: SKScene {
         if let capturedPitName = pit.name {
             if !pit.children.isEmpty {
                 capturedSeedCount = pit.children.count
+                pit.run(SKAction.sequence([SKAction.fadeOut(withDuration: 0.3), SKAction.wait(forDuration: 0.1), SKAction.fadeIn(withDuration: 0.3)]))
                 pit.removeAllChildren()
                 setSeedCount(pit: pit)
                 updatePlayerScores(score: capturedSeedCount)
@@ -324,9 +334,11 @@ class GameScene: SKScene {
     func updatePlayerScores(score: Int){
         if currentPlayer == .player1 {
             self.player1Score = player1Score + score
+            playerScoreValue1?.text = String(player1Score)
             print("Player 1 Score \(String(player1Score))")
         } else {
             self.player2Score = player2Score + score
+            playerScoreValue2?.text = String(player2Score)
              print("Player 2 Score \(String(player2Score))")
         }
     }
@@ -349,9 +361,9 @@ class GameScene: SKScene {
         }
     }
     
-    func checkSeedsAvailability() -> Bool {
+    func getSeedsAvailability(player: Player) -> Int {
         var availablePitsWithSeeds : Int = 0
-        switch currentPlayer {
+        switch player {
         case .player1:
             for p in player2Pits { if !p.children.isEmpty {availablePitsWithSeeds += 1}}
             break
@@ -359,11 +371,11 @@ class GameScene: SKScene {
             for p in player1Pits { if !p.children.isEmpty {availablePitsWithSeeds += 1}}
             break
         }
-        return availablePitsWithSeeds > 0 ? true : false
+        return availablePitsWithSeeds
     }
     
     func assignNextPlayer() {
-        if(checkSeedsAvailability()) {
+        if(getSeedsAvailability(player: currentPlayer)>0) {
             if(validPitTouched) {
                 switch currentPlayer {
                 case .player1:
@@ -379,6 +391,8 @@ class GameScene: SKScene {
     }
     
     func setWinner() {
+        player1Score = player1Score + getSeedsAvailability(player: .player2)
+        player2Score = player2Score + getSeedsAvailability(player: .player1)
         let winner : Player
         if(player1Score == player2Score) {
             winner = currentPlayer
@@ -386,7 +400,21 @@ class GameScene: SKScene {
             winner = player1Score > player2Score ? .player1 : .player2
             print("Winner is: " + winner.rawValue)
         }
+       
         //display winner and stop the game
+        displayGameOverScene(winner: winner.rawValue, score: (winner == Player.player1) ? player1Score : player2Score )
+    }
+    
+    func displayGameOverScene(winner: String, score: Int) {
+        self.run(SKAction.wait(forDuration: 0.5))
+        let reveal = SKTransition.doorway(withDuration: 1.0)
+        if let gameOverScene = GameOverScene(fileNamed: "GameOverScene") {
+            let userData = gameOverScene.userData ?? [:]
+            userData["winner"] = winner
+            userData["score"] = score
+            gameOverScene.userData = userData
+            self.view?.presentScene(gameOverScene, transition: reveal)
+        }
     }
     
     override func touchesBegan(_ touches: Set<UITouch>, with event: UIEvent?) {
