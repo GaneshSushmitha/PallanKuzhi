@@ -18,11 +18,11 @@ class GameScene: SKScene {
     
     private var title : SKLabelNode?
     private var spinnyNode : SKShapeNode?
-
+    
     private var board: SKSpriteNode?
     
     private var touchedPitNode : SKShapeNode?
-
+    
     private var pits = [SKShapeNode](repeating: SKShapeNode(), count: 14) //initializing array of shapenode ()-> constructor call
     
     private var pitNeighbours = [(from: SKShapeNode, to: SKShapeNode)]()
@@ -41,6 +41,8 @@ class GameScene: SKScene {
     
     private var playerScoreValue2 : SKLabelNode?
     
+    private var gameInfoButton : SKLabelNode?
+    
     private var player1Score : Int = 0
     
     private var player2Score : Int = 0
@@ -52,11 +54,11 @@ class GameScene: SKScene {
     let playerSpriteScaleUp = SKAction.scale(to: 1.2, duration: 0.8)
     
     let playerSpriteScaleDown = SKAction.scale(to: 1.0, duration: 0.8)
-
+    
     let playerSpriteMoveUp = SKAction.moveBy(x: 0.0, y: 50.0, duration: 0.5)
     
     let playerSpriteMoveDown = SKAction.moveBy(x: 0.0, y: -50.0, duration: 0.5)
-
+    
     override func didMove(to view: SKView) {
         
         // Get title node from scene
@@ -71,7 +73,12 @@ class GameScene: SKScene {
         self.playerScoreValue1 = self.childNode(withName: "//PlayerScoreValue1") as? SKLabelNode
         
         self.playerScoreValue2 = self.childNode(withName: "//PlayerScoreValue2") as? SKLabelNode
-    
+        
+        self.gameInfoButton = self.childNode(withName: "//GameInfoButton") as? SKLabelNode
+        
+        self.gameInfoButton?.text = "Game Info"
+        self.gameInfoButton?.name = "gameInfo"
+        self.gameInfoButton?.isUserInteractionEnabled = true
         self.name = "GameScene"
         
         populatePits()
@@ -89,7 +96,7 @@ class GameScene: SKScene {
         
         // Create shape node to use during touch interaction
         self.spinnyNode = SKShapeNode.init(rectOf: CGSize.init(width: 20.0, height: 20.0), cornerRadius: 8.0)
-        
+        print("Test commit")
         if let spinnyNode = self.spinnyNode {
             spinnyNode.lineWidth = 0.5
             spinnyNode.run(SKAction.repeatForever(SKAction.rotate(byAngle: CGFloat(Double.pi), duration: 1)))
@@ -131,7 +138,7 @@ class GameScene: SKScene {
             assignPlayerPits()
         }
     }
-
+    
     func assignPlayerPits() {
         player1Pits = Array(pits[0...6])
         player2Pits = Array(pits[7...13])
@@ -157,7 +164,7 @@ class GameScene: SKScene {
     }
     
     func getNeighbour(pit : SKShapeNode) -> SKShapeNode {
-       let r = pitNeighbours.first { (from: SKShapeNode, to: SKShapeNode) -> Bool in
+        let r = pitNeighbours.first { (from: SKShapeNode, to: SKShapeNode) -> Bool in
             return from == pit
         }
         if let r = r {
@@ -175,7 +182,7 @@ class GameScene: SKScene {
             
             //debug seeds
             //if pitNo > 0 {
-              //  break
+            //  break
             //}
             
             for seedNo in 1...6 {
@@ -184,27 +191,13 @@ class GameScene: SKScene {
                 pitSeed.fillColor = UIColor.init(red: (CGFloat(20.0) * CGFloat(seedNo) / 255.0), green: (CGFloat(30.0) * CGFloat(seedNo) / 255.0), blue: (CGFloat(40.0) * CGFloat(seedNo) / 255.0), alpha: 1.0)
                 pitSeed.name = "PitSeed\(pitNo * 6 + seedNo)"
                 
-                switch seedNo {
-                case 1:
-                    pitSeed.position = CGPoint(x: 0.0, y: 32.0)
-                case 2:
-                    pitSeed.position = CGPoint(x: -24.0, y: 15.0)
-                case 3:
-                    pitSeed.position = CGPoint(x: -24.0, y: -15.0)
-                case 4:
-                    pitSeed.position = CGPoint(x: 0.0, y: -32.0)
-                case 5:
-                    pitSeed.position = CGPoint(x: 24.0, y: -15.0)
-                case 6:
-                    pitSeed.position = CGPoint(x: 24.0, y: 15.0)
-                default:
-                    break
-                }
+                
+                pitSeed.position = originalSeedPos(seedNo, pitSeed)
                 pit.addChild(pitSeed)
             }
         }
     }
-  
+    
     func displayNextPlayerTurn() {
         if currentPlayer == Player.player1 {
             playerSprite1?.run(playerSpriteScaleUp)
@@ -258,7 +251,7 @@ class GameScene: SKScene {
             }
         }
         else {
-        self.validPitTouched = false
+            self.validPitTouched = false
         }
         return self.validPitTouched
     }
@@ -288,19 +281,85 @@ class GameScene: SKScene {
                 setSeedCount(pit: currentPitNode)
                 
                 var neighborPit = getNeighbour(pit: currentPitNode)
-                
+                var neighborPitSeedCount = neighborPit.children.count
                 for seed in seeds {
+                    if(neighborPitSeedCount >= 6) {
+                        let repositionFactor = neighborPitSeedCount - 6
+                        print("FACTOR: ", repositionFactor)
+                        seed.position = repositionSeeds(repositionFactor, seed)
+                    } else {
+                        seed.position = originalSeedPos(neighborPitSeedCount, seed)
+                    }
                     neighborPit.addChild(seed)
-                    //Specify position of the newly added seed
-                    rearrangeSeeds()
                     //Set the seed count label
                     setSeedCount(pit: neighborPit)
                     neighborPit = getNeighbour(pit: neighborPit)
+                    neighborPitSeedCount = neighborPit.children.count
                 }
                 currentPitNode = neighborPit
                 //print((String(describing:currentPitNode.name)))
             }
             captureSeeds(pit: getNeighbour(pit: currentPitNode))
+        }
+    }
+    
+    func originalSeedPos(_ seedNo:Int, _ pitSeed:SKNode) -> CGPoint{
+        switch seedNo {
+        case 1:
+            return CGPoint(x: 0.0, y: 32.0)
+        case 2:
+            return CGPoint(x: -24.0, y: 15.0)
+        case 3:
+            return CGPoint(x: -24.0, y: -15.0)
+        case 4:
+            return CGPoint(x: 0.0, y: -32.0)
+        case 5:
+            return CGPoint(x: 24.0, y: -15.0)
+        case 6:
+            return CGPoint(x: 24.0, y: 15.0)
+        default:
+            return CGPoint(x: 0.0, y: 0.0)
+        }
+    }
+    
+    func repositionSeeds(_ seedNo:Int, _ pitSeed:SKNode) -> CGPoint{
+        switch seedNo {
+        case 0:
+            return CGPoint(x: 15.0, y: 22.0)
+        case 1:
+            return CGPoint(x: -14.0, y: 5.0)
+        case 2:
+            return CGPoint(x: -16.0, y: -5.0)
+        case 3:
+            return CGPoint(x: 15.0, y: -22.0)
+        case 4:
+            return CGPoint(x: 14.0, y: -5.0)
+        case 5:
+            return CGPoint(x: 17.0, y: 5.0)
+        case 6:
+            return CGPoint(x: 20.0, y: 5.0)
+        case 7:
+            return CGPoint(x: 19.0, y: 0.0)
+        case 8:
+            return CGPoint(x: 12.0, y: 2.0)
+        case 9:
+            return CGPoint(x: 10.0, y: -1.0)
+        case 10:
+            return CGPoint(x: 12.0, y: 4.0)
+        case 11:
+            return CGPoint(x: 21.0, y: -3.0)
+        case 12:
+            return CGPoint(x: 11.0, y: -1.0)
+        case 13:
+            return CGPoint(x: 14.0, y: 2.0)
+        case 14:
+            return CGPoint(x: 22.0, y: 5.0)
+        case 15:
+            return CGPoint(x: 18.0, y: 3.0)
+        case 16:
+            return CGPoint(x: 16.0, y: -8.0)
+        default:
+            return pitSeed.position
         }
     }
     
@@ -311,7 +370,7 @@ class GameScene: SKScene {
                 
                 //Animate the changed seed count in neighbour pit
                 seedCount.run(SKAction.sequence([SKAction.colorize(with: UIColor.blue, colorBlendFactor: 0.5, duration: 0.5),
-                SKAction.colorize(with: UIColor.yellow, colorBlendFactor: 0.5, duration: 0.5)]))
+                                                 SKAction.colorize(with: UIColor.yellow, colorBlendFactor: 0.5, duration: 0.5)]))
                 //Set the new seed count
                 seedCount.text = String(pit.children.count)
             }
@@ -339,7 +398,7 @@ class GameScene: SKScene {
         } else {
             self.player2Score = player2Score + score
             playerScoreValue2?.text = String(player2Score)
-             print("Player 2 Score \(String(player2Score))")
+            print("Player 2 Score \(String(player2Score))")
         }
     }
     
@@ -400,7 +459,7 @@ class GameScene: SKScene {
             winner = player1Score > player2Score ? .player1 : .player2
             print("Winner is: " + winner.rawValue)
         }
-       
+        
         //display winner and stop the game
         displayGameOverScene(winner: winner.rawValue, score: (winner == Player.player1) ? player1Score : player2Score )
     }
@@ -418,7 +477,20 @@ class GameScene: SKScene {
     }
     
     override func touchesBegan(_ touches: Set<UITouch>, with event: UIEvent?) {
-        for t in touches { self.touchDown(atPoint: t.location(in: self)) }
+        for t in touches {
+            self.touchDown(atPoint: t.location(in: self))
+            let touch:UITouch = touches.first!
+            let positionInScene = touch.location(in: self)
+            let touchedNode = self.atPoint(positionInScene)
+            print("TOUCHED NODE : ", touchedNode.name)
+            if let name = touchedNode.name
+            {
+                if name == "playLbl"
+                {
+                    print("playLbl Touched")
+                }
+            }
+        }
     }
     
     override func touchesMoved(_ touches: Set<UITouch>, with event: UIEvent?) {
@@ -432,7 +504,7 @@ class GameScene: SKScene {
     override func touchesCancelled(_ touches: Set<UITouch>, with event: UIEvent?) {
         for t in touches { self.touchUp(atPoint: t.location(in: self)) }
     }
-
+    
     override func update(_ currentTime: TimeInterval) {
         // Called before each frame is rendered
     }
