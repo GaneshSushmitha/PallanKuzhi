@@ -41,8 +41,6 @@ class GameScene: SKScene {
     
     private var playerScoreValue2 : SKLabelNode?
     
-    private var gameInfoButton : SKLabelNode?
-    
     private var player1Score : Int = 0
     
     private var player2Score : Int = 0
@@ -74,11 +72,6 @@ class GameScene: SKScene {
         
         self.playerScoreValue2 = self.childNode(withName: "//PlayerScoreValue2") as? SKLabelNode
         
-        self.gameInfoButton = self.childNode(withName: "//GameInfoButton") as? SKLabelNode
-        
-        self.gameInfoButton?.text = "Game Info"
-        self.gameInfoButton?.name = "gameInfo"
-        self.gameInfoButton?.isUserInteractionEnabled = true
         self.name = "GameScene"
         
         populatePits()
@@ -96,7 +89,6 @@ class GameScene: SKScene {
         
         // Create shape node to use during touch interaction
         self.spinnyNode = SKShapeNode.init(rectOf: CGSize.init(width: 20.0, height: 20.0), cornerRadius: 8.0)
-        print("Test commit")
         if let spinnyNode = self.spinnyNode {
             spinnyNode.lineWidth = 0.5
             spinnyNode.run(SKAction.repeatForever(SKAction.rotate(byAngle: CGFloat(Double.pi), duration: 1)))
