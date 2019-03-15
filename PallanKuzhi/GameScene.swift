@@ -37,6 +37,8 @@ class GameScene: SKScene {
     
     private var playerSprite2 : SKSpriteNode?
     
+    private var gameInfo : SKSpriteNode?
+    
     private var playerScoreValue1 : SKLabelNode?
     
     private var playerScoreValue2 : SKLabelNode?
@@ -67,6 +69,8 @@ class GameScene: SKScene {
         self.playerSprite1 = board?.childNode(withName: "//PlayerSprite1") as? SKSpriteNode
         
         self.playerSprite2 = board?.childNode(withName: "//PlayerSprite2") as? SKSpriteNode
+        
+        self.gameInfo = board?.childNode(withName: "//GameInfo") as? SKSpriteNode
         
         self.playerScoreValue1 = self.childNode(withName: "//PlayerScoreValue1") as? SKLabelNode
         
@@ -220,6 +224,18 @@ class GameScene: SKScene {
             return false
         })
         
+        let touchedGameInfo = touchedNodes.filter({ (touchedNode) -> Bool in
+            if let name = touchedNode.name {
+                return name == "GameInfo"
+            }
+            return false
+        })
+        
+        if(!touchedGameInfo.isEmpty) {
+            displayGameInfo()
+        }
+        
+        
         if let touchedPitNode = touchedPitNodes.first  as? SKShapeNode {
             self.touchedPitNode = touchedPitNode
             if validateTouchedPit() {
@@ -277,7 +293,6 @@ class GameScene: SKScene {
                 for seed in seeds {
                     if(neighborPitSeedCount >= 6) {
                         let repositionFactor = neighborPitSeedCount - 6
-                        print("FACTOR: ", repositionFactor)
                         seed.position = repositionSeeds(repositionFactor, seed)
                     } else {
                         seed.position = originalSeedPos(neighborPitSeedCount, seed)
@@ -455,7 +470,7 @@ class GameScene: SKScene {
         //display winner and stop the game
         displayGameOverScene(winner: winner.rawValue, score: (winner == Player.player1) ? player1Score : player2Score )
     }
-    
+
     func displayGameOverScene(winner: String, score: Int) {
         self.run(SKAction.wait(forDuration: 0.5))
         let reveal = SKTransition.doorway(withDuration: 1.0)
@@ -468,21 +483,16 @@ class GameScene: SKScene {
         }
     }
     
-    override func touchesBegan(_ touches: Set<UITouch>, with event: UIEvent?) {
-        for t in touches {
-            self.touchDown(atPoint: t.location(in: self))
-            let touch:UITouch = touches.first!
-            let positionInScene = touch.location(in: self)
-            let touchedNode = self.atPoint(positionInScene)
-            print("TOUCHED NODE : ", touchedNode.name)
-            if let name = touchedNode.name
-            {
-                if name == "playLbl"
-                {
-                    print("playLbl Touched")
-                }
-            }
+    func displayGameInfo() {
+        self.run(SKAction.wait(forDuration: 0.5))
+        let reveal = SKTransition.doorway(withDuration: 1.0)
+        if let gameInfo = GameInfo(fileNamed: "GameInfo") {
+            self.view?.presentScene(gameInfo, transition: reveal)
         }
+    }
+    
+    override func touchesBegan(_ touches: Set<UITouch>, with event: UIEvent?) {
+        for t in touches {self.touchDown(atPoint: t.location(in: self))}
     }
     
     override func touchesMoved(_ touches: Set<UITouch>, with event: UIEvent?) {
